@@ -93,14 +93,25 @@ You can combine `-DeepScan` and `-OutputDirectory`. The script creates the outpu
 
 The audit covers OS and activation, CPU, RAM, GPU, disks, battery, drivers, security, networking, Windows Update, and system errors. Some checks require administrator privileges, supported hardware, or Internet access. These diagnostic commands do not request package installation, update installation, or repair operations.
 
-If execution policy blocks a downloaded script, review the file first. Where your organization's policy permits, unblock that file and retry:
+### Fix “running scripts is disabled on this system”
+
+After reviewing the script, run these commands from the repository directory in the same PowerShell window, where your organization's policy permits:
 
 ```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 Unblock-File -LiteralPath .\Windows-Full-HealthCheck.ps1
-.\Windows-Full-HealthCheck.ps1
+.\Windows-Full-HealthCheck.ps1 -DeepScan
 ```
 
-Follow your organization's approved execution policy if it remains blocked. Installing PowerShell on Linux does not provide the Windows APIs this script requires.
+Confirm the policy-change prompt if shown. `-Scope Process` applies only to the current PowerShell session; closing the window removes the change. Open PowerShell as Administrator for more complete diagnostics, then enter the repository directory before running these commands. Omit `-DeepScan` for the standard report.
+
+If execution is still blocked, inspect the effective policies:
+
+```powershell
+Get-ExecutionPolicy -List
+```
+
+An organization-managed `MachinePolicy` or `UserPolicy` can override the session setting; follow your organization's approved policy in that case. Installing PowerShell on Linux does not provide the Windows APIs this script requires.
 
 ## 🩺 Coach’s notes
 
