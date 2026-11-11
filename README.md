@@ -2,14 +2,14 @@
 
 **Check the stats. Spot the warning signs. Keep your computer in the game.**
 
-Two standalone diagnostic scripts turn system information into readable reports: a full Linux health overview and a focused Windows disk check. Think of them as a pre-match fitness assessment for your machine.
+Two standalone diagnostic scripts turn system information into readable reports: a full Linux health overview and a full Windows system audit. Think of them as a pre-match fitness assessment for your machine.
 
 ## 🏟️ Pick your arena
 
 | Script | Platform | Game plan | Report location |
 | --- | --- | --- | --- |
 | `ubuntu_health_report.sh` | Ubuntu / APT-based Linux | System, hardware, and update overview | `~/ubuntu-health-report-YYYYMMDD_HHMMSS.txt` |
-| `Check-DiskHealth.ps1` | Windows PowerShell | Disk health and reliability overview | `%USERPROFILE%\Desktop\DiskHealthReport.txt` |
+| `Windows-Full-HealthCheck.ps1` | Windows PowerShell 5.1+ | System, storage, security, and update overview | Desktop `WindowsHealthReports` folder (HTML, TXT, JSON) |
 
 No build step, Python environment, or application server is needed.
 
@@ -27,6 +27,7 @@ cd computer_health
 Use Bash on Ubuntu or another APT-based Linux distribution. Standard system utilities provide the core report. Optional tools add more detail:
 
 ```bash
+sudo apt update
 sudo apt install smartmontools nvme-cli lm-sensors fwupd
 ```
 
@@ -57,24 +58,49 @@ The Linux report covers:
 
 **The script refreshes APT package indexes when permissions allow, but does not install package, driver, firmware, or BIOS updates.** It also runs an APT upgrade simulation.
 
-## 🪟 Windows: the disk performance check
+## 🪟 Windows: full system health audit
 
-Open PowerShell in the repository directory, preferably as Administrator for access to available storage diagnostics:
+Use **Windows PowerShell 5.1 or later on Windows**. Open PowerShell as Administrator for more complete diagnostics. With Git installed, clone the repository and enter it:
 
 ```powershell
-.\Check-DiskHealth.ps1
+git clone https://github.com/Rmin-code2005/computer_health.git
+Set-Location computer_health
 ```
 
-The script uses Windows Storage and CIM commands to collect:
+Alternatively, download and extract the repository ZIP, then open PowerShell in the extracted directory.
 
-- Physical disk identity, media type, bus type, and health status.
-- Available storage reliability counters.
-- Logical disk capacity and free space.
-- Disk model, firmware revision, and WMI status.
+### Standard report
 
-It writes to `$env:USERPROFILE\Desktop\DiskHealthReport.txt`. That directory must exist; redirected or OneDrive-managed desktops may use a different location. Each run replaces the previous report, so save a copy if you want to compare results over time.
+```powershell
+.\Windows-Full-HealthCheck.ps1
+```
 
-If local execution policy blocks the script, review it and follow your organization's approved PowerShell execution policy. The script is intended for Windows; installing PowerShell on Linux does not provide the Windows storage APIs it needs.
+### Optional deep scan
+
+This adds DISM `/ScanHealth`, SFC `/verifyonly`, and CHKDSK `/scan` checks and can take considerably longer:
+
+```powershell
+.\Windows-Full-HealthCheck.ps1 -DeepScan
+```
+
+### Choose the report directory
+
+```powershell
+.\Windows-Full-HealthCheck.ps1 -OutputDirectory "$env:USERPROFILE\Documents\WindowsHealthReports"
+```
+
+You can combine `-DeepScan` and `-OutputDirectory`. The script creates the output directory if needed. By default, it uses `WindowsHealthReports` inside the Desktop folder resolved by Windows, including redirected desktops. Each run creates timestamped `Health-yyyyMMdd-HHmmss.html`, `.txt`, and `.json` reports and prints their paths. A battery HTML report may also be generated when supported. Open the HTML file in a browser for the formatted report.
+
+The audit covers OS and activation, CPU, RAM, GPU, disks, battery, drivers, security, networking, Windows Update, and system errors. Some checks require administrator privileges, supported hardware, or Internet access. These diagnostic commands do not request package installation, update installation, or repair operations.
+
+If execution policy blocks a downloaded script, review the file first. Where your organization's policy permits, unblock that file and retry:
+
+```powershell
+Unblock-File -LiteralPath .\Windows-Full-HealthCheck.ps1
+.\Windows-Full-HealthCheck.ps1
+```
+
+Follow your organization's approved execution policy if it remains blocked. Installing PowerShell on Linux does not provide the Windows APIs this script requires.
 
 ## 🩺 Coach’s notes
 
